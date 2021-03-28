@@ -1,5 +1,6 @@
 package jorge.mendoza.mydigimind.ui.home
 
+import Task
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -16,13 +17,20 @@ import androidx.lifecycle.ViewModelProvider
 import jorge.mendoza.mydigimind.R
 import jorge.mendoza.mydigimind.Recordatorio
 import kotlinx.android.synthetic.main.fragment_home.*
+import kotlinx.android.synthetic.main.fragment_home.view.*
 import kotlinx.android.synthetic.main.recordatorio.view.*
+import kotlinx.android.synthetic.main.task_view.view.*
 
 class HomeFragment : Fragment() {
 
+    var tasks = ArrayList<Task>()
+    private var adaptador: AdaptadorTareas? = null
     private lateinit var homeViewModel: HomeViewModel
-    var adapterRecordatorio: RecordatorioAdapter? = null
-    var recordatorios = ArrayList<Recordatorio>()
+
+    companion object{
+        var tasks = ArrayList<Task>()
+        var first = true
+    }
 
     override fun onCreateView(
             inflater: LayoutInflater,
@@ -30,71 +38,65 @@ class HomeFragment : Fragment() {
             savedInstanceState: Bundle?
     ): View? {
 
-        var context: Context?
-        context = container?.context
-        cargarRecordatorios()
-        adapterRecordatorio = RecordatorioAdapter(context, recordatorios)
-        var grid: GridView = GridView(context)
-        grid.adapter = adapterRecordatorio
-
-
         homeViewModel =
                 ViewModelProvider(this).get(HomeViewModel::class.java)
         val root = inflater.inflate(R.layout.fragment_home, container, false)
-        homeViewModel.text.observe(viewLifecycleOwner, Observer {
 
-        })
+        if (first){
+            fillTasks()
+            first = false
+        }
+
+        adaptador = AdaptadorTareas(root.context, tasks)
+        root.gridView.adapter = adaptador
+
         return root
     }
 
-    fun cargarRecordatorios(){
-        recordatorios.add(Recordatorio("Monday","10:00 am","Wake up"))
+    fun fillTasks(){
+        tasks.add(Task("Practice 1", arrayListOf("Tuesday"),"17:30"))
+        tasks.add(Task("Practice 2", arrayListOf("Monday, Saturday"),"17:00"))
+        tasks.add(Task("Practice 3", arrayListOf("Wednesday"),"14:00"))
+        tasks.add(Task("Practice 4", arrayListOf("Saturday"),"11:00"))
+        tasks.add(Task("Practice 5", arrayListOf("Friday"),"13:00"))
+        tasks.add(Task("Practice 6", arrayListOf("Thursday"),"10:40"))
+        tasks.add(Task("Practice 7", arrayListOf("Monday"),"12:00"))
     }
 
-}
+    private class AdaptadorTareas: BaseAdapter{
+        var tasks = ArrayList<Task>()
+        var contexto: Context? = null
 
-
-
-
-class RecordatorioAdapter: BaseAdapter {
-    var recordatorio = ArrayList<Recordatorio>()
-    var context: Context? = null
-
-    constructor(context: Context?, recordatorio: ArrayList<Recordatorio>){
-        this.context = context
-        this.recordatorio= recordatorio
-    }
-
-    override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
-        var recordatorio = recordatorio[position]
-        var inflator = context!!.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-        var vista = inflator.inflate(R.layout.recordatorio, null)
-        vista.txtNombreRecordatorio.setText(recordatorio.nombre)
-        vista.txtDiasRecordatorio.setText(recordatorio.dias)
-        vista.txtTiempoRecordatorio.setText(recordatorio.tiempo)
-
-        /*
-        vista.iv_pelicula.setOnClickListener(){
-            var intent = Intent(context, DetallePelicula::class.java)
-            intent.putExtra("nombre", pelicula.titulo)
-            intent.putExtra("image", pelicula.image)
-            intent.putExtra("header", pelicula.header)
-            intent.putExtra("sinopsis", pelicula.sinopsis)
-            context!!.startActivity(intent)
+        constructor(contexto: Context, tasks: ArrayList<Task>){
+            this.contexto = contexto
+            this.tasks = tasks
         }
-        */
-        return vista
+
+        override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
+            var task = tasks.get(position)
+            var inflator = LayoutInflater.from(contexto)
+            var vista = inflator.inflate(R.layout.task_view,null)
+
+            vista.tv_title.setText(task.title)
+            vista.tv_time.setText(task.time)
+            vista.tv_days.setText(task.days.toString())
+
+            return vista
+        }
+
+        override fun getItem(position: Int): Any {
+            return tasks[position]
+        }
+
+        override fun getItemId(position: Int): Long {
+            return position.toLong()
+        }
+
+        override fun getCount(): Int {
+            return tasks.size
+        }
+
+
     }
 
-    override fun getItem(position: Int): Any {
-        return recordatorio[position]
-    }
-
-    override fun getItemId(position: Int): Long {
-        return position.toLong()
-    }
-
-    override fun getCount(): Int {
-        return recordatorio.size
-    }
 }
